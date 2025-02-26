@@ -15,7 +15,7 @@ video_urls = [
 ]
 
 # 下载目录
-download_path = "./data"
+download_path = "C:/Users/LMAPA/Documents/GitHub/vision-black-tech/EVM_Matlab/data/"
 
 # 创建下载目录（如果不存在）
 os.makedirs(download_path, exist_ok=True)

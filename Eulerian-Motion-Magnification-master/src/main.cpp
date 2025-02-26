@@ -52,8 +52,8 @@ int main(int argc, char **argv)
         // lambda				= 0
         // levels				= 6
 
-        input_filename = "C:/Users/LMAPA/Documents/GitHub/vision-black-tech/Eulerian-Motion-Magnification/data/baby.mp4";
-        output_filename = "C:/Users/LMAPA/Documents/GitHub/vision-black-tech/Eulerian-Motion-Magnification/data/baby_mag.avi";
+        input_filename = "C:/Users/LMAPA/Documents/GitHub/vision-black-tech/Eulerian-Motion-Magnification-master/data/baby.mp4";
+        output_filename = "C:/Users/LMAPA/Documents/GitHub/vision-black-tech/Eulerian-Motion-Magnification-master/data/baby_mag.avi";
         input_width = 640;
         input_height = 480;
         output_width = 960;

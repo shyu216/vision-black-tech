@@ -4,3 +4,9 @@
 
 # MATLAB build files
 *.mexw64
+
+# 忽略构建文件夹
+build/
+
+# 忽略特定的用户配置文件
+CMakeLists.txt.user

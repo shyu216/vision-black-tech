@@ -25,6 +25,10 @@ Required packages: g++, CMake, OpenCV, Boost
 	$ cd <PROJ_DIR>
 	$ cmake .
 	$ make
+### Compiling on Windows with Ninja
+    $ cd <PROJ_DIR>
+    $ cmake -G "Ninja" .
+    $ ninja
 ### Running the program with test params
 	$ cd <PROJ_DIR>
 	$ ./bin/Eulerian_Motion_Magnification test/test_baby.param

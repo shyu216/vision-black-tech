@@ -3,7 +3,6 @@ from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
 def plot_rgb_cube():
-    fig = plt.figure()
     ax = fig.add_subplot(121, projection='3d')
     ax.set_xlabel('Red')
     ax.set_ylabel('Green')
@@ -25,7 +24,6 @@ def plot_rgb_cube():
     ax.set_title('RGB Color Space')
 
 def plot_yiq_cube():
-    fig = plt.figure()
     ax = fig.add_subplot(122, projection='3d')
     ax.set_xlabel('Y')
     ax.set_ylabel('I')
@@ -53,6 +51,9 @@ def plot_yiq_cube():
     ax.set_title('YIQ Color Space')
 
 if __name__ == "__main__":
+    fig = plt.figure(figsize=(12,8))
     plot_rgb_cube()
     plot_yiq_cube()
+    plt.tight_layout()
+    plt.savefig('color_model.png')
     plt.show()

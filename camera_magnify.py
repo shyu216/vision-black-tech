@@ -24,6 +24,9 @@ fh = 3
 samplingRate = 30
 chromAttenuation = 0.1
 
+low_b, low_a = butter(1, fl / (samplingRate / 2), btype='low')
+high_b, high_a = butter(1, fh / (samplingRate / 2), btype='low')
+
 # 打开摄像头
 cap = cv2.VideoCapture(0)
 
@@ -53,9 +56,8 @@ while True:
         print("无法接收帧 (stream end?). Exiting ...")
         break
 
-    # 放大视频
-    low_b, low_a = butter(1, fl / (samplingRate / 2), btype='low')
-    high_b, high_a = butter(1, fh / (samplingRate / 2), btype='low')
+    # 显示原始帧
+    cv2.imshow('Original Camera', frame)
 
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) / 255.0
     frame = cv2.cvtColor(frame.astype(np.float32), cv2.COLOR_RGB2YCrCb)
@@ -107,9 +109,6 @@ while True:
     output = np.clip(output, 0, 1)
 
     amplified_frame = (output * 255).astype(np.uint8)
-
-    # 显示原始帧
-    cv2.imshow('Original Camera', frame)
 
     # 显示放大帧
     cv2.imshow('Amplified Camera', amplified_frame)

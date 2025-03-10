@@ -23,7 +23,7 @@ lambda_c = 16
 r1 = 0.5
 r2 = 0.05
 chromAttenuation = 0.1
-nlevels = 3
+nlevels = 4
 
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():
@@ -38,8 +38,9 @@ if not ret:
     exit()
 
 # 直接转换为YCrCb并归一化
-frame = cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb).astype(np.float32) / 255.0
-pyr = build_laplacian_pyramid(frame, levels=nlevels)
+frame_ycrcb = cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb).astype(np.float32) / 255.0
+frame_y = frame_ycrcb[:, :, 0]
+pyr = build_laplacian_pyramid(frame_y, levels=nlevels)
 lowpass1 = copy.deepcopy(pyr)
 lowpass2 = copy.deepcopy(pyr)
 
@@ -55,7 +56,8 @@ while True:
 
     # 颜色空间转换和归一化合并处理
     frame_ycrcb = cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb).astype(np.float32) / 255.0
-    pyr = build_laplacian_pyramid(frame_ycrcb, levels=nlevels)
+    frame_y = frame_ycrcb[:, :, 0]
+    pyr = build_laplacian_pyramid(frame_y, levels=nlevels)
 
     # 时域滤波（原地操作优化）
     for i in range(nlevels):
@@ -82,21 +84,17 @@ while True:
         
         lambda_ /= 2
 
-    # 金字塔重建（多通道同时处理）
+    # 金字塔重建
     upsampled = filtered[0].copy()
     for l in range(1, nlevels):
         upsampled = cv2.pyrUp(upsampled, dstsize=(filtered[l].shape[1], filtered[l].shape[0]))
         upsampled += filtered[l]
     
-    # 色度通道衰减
-    upsampled[..., 1] *= chromAttenuation
-    upsampled[..., 2] *= chromAttenuation
-
     # 合成并转换颜色空间
-    # output = cv2.cvtColor(frame_ycrcb + upsampled, cv2.COLOR_YCrCb2BGR)
-    output = cv2.cvtColor(upsampled, cv2.COLOR_YCrCb2BGR)
+    frame_ycrcb[:, :, 0] = frame_y + upsampled
+    output = cv2.cvtColor(frame_ycrcb, cv2.COLOR_YCrCb2BGR)
 
-    # print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
+    print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
     cv2.putText(output, f"Delay: {(time.time() - start_time)*1000:.2f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     cv2.imshow('Amplified Camera', output)
 

@@ -74,5 +74,5 @@ plt.title("High-Pass Filtered Image"), plt.xticks([]), plt.yticks([])
 
 # plt.show() 
 # 保存结果
-plt.savefig('filter.png')
+plt.savefig('ideal_filter.png')
 plt.close()

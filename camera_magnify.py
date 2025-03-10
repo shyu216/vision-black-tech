@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
-from scipy.signal import butter, filtfilt
+import copy
+import time
 
 def build_laplacian_pyramid(image, levels):
     gaussian_pyramid = [image]
@@ -17,11 +18,12 @@ def build_laplacian_pyramid(image, levels):
     
     return laplacian_pyramid
 
-alpha = 5
+alpha = 20
 lambda_c = 16
-r1 = 0.4
+r1 = 0.5
 r2 = 0.05
 chromAttenuation = 0.1
+nlevels = 3
 
 # 打开摄像头
 cap = cv2.VideoCapture(0)
@@ -39,12 +41,12 @@ if not ret:
 
 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) / 255.0
 frame = cv2.cvtColor(frame.astype(np.float32), cv2.COLOR_RGB2YCrCb)
-pyr_y = build_laplacian_pyramid(frame[:, :, 0], levels=3)
-pyr_cr = build_laplacian_pyramid(frame[:, :, 1], levels=3)
-pyr_cb = build_laplacian_pyramid(frame[:, :, 2], levels=3)
+pyr_y = build_laplacian_pyramid(frame[:, :, 0], levels=nlevels)
+pyr_cr = build_laplacian_pyramid(frame[:, :, 1], levels=nlevels)
+pyr_cb = build_laplacian_pyramid(frame[:, :, 2], levels=nlevels)
 pyr = [np.stack([pyr_y[i], pyr_cr[i], pyr_cb[i]], axis=-1) for i in range(len(pyr_y))]
-lowpass1 = [np.copy(p) for p in pyr]
-lowpass2 = [np.copy(p) for p in pyr]
+lowpass1 = copy.deepcopy(pyr)
+lowpass2 = copy.deepcopy(pyr)
 
 while True:
     # 读取摄像头帧
@@ -56,14 +58,14 @@ while True:
     # 显示原始帧
     cv2.imshow('Original Camera', frame)
 
+    start_time = time.time()
+
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) / 255.0
     frame = cv2.cvtColor(frame.astype(np.float32), cv2.COLOR_RGB2YCrCb)
-    pyr_y = build_laplacian_pyramid(frame[:, :, 0], levels=3)
-    pyr_cr = build_laplacian_pyramid(frame[:, :, 1], levels=3)
-    pyr_cb = build_laplacian_pyramid(frame[:, :, 2], levels=3)
+    pyr_y = build_laplacian_pyramid(frame[:, :, 0], levels=nlevels)
+    pyr_cr = build_laplacian_pyramid(frame[:, :, 1], levels=nlevels)
+    pyr_cb = build_laplacian_pyramid(frame[:, :, 2], levels=nlevels)
     pyr = [np.stack([pyr_y[i], pyr_cr[i], pyr_cb[i]], axis=-1) for i in range(len(pyr_y))]
-
-    nLevels = len(pyr)
 
     # temporal filtering
     lowpass1 = [(1 - r1) * lp1 + r1 * p for lp1, p in zip(lowpass1, pyr)]
@@ -75,11 +77,11 @@ while True:
     exaggeration_factor = 2
     lambda_ = (frame.shape[0] ** 2 + frame.shape[1] ** 2) ** 0.5 / 3
 
-    for l in range(nLevels):
+    for l in range(nlevels):
         currAlpha = lambda_ / delta / 8 - 1
         currAlpha = currAlpha * exaggeration_factor
 
-        if l == nLevels - 1 or l == 0:
+        if l == nlevels - 1 or l == 0:
             filtered[l] = np.zeros_like(filtered[l])
         elif currAlpha > alpha:
             filtered[l] = alpha * filtered[l]
@@ -92,7 +94,7 @@ while True:
     output = np.zeros_like(frame)
     for j in range(3):
         upsampled = filtered[0][:, :, j]
-        for l in range(1, nLevels):
+        for l in range(1, nlevels):
             upsampled = cv2.pyrUp(upsampled, dstsize=(filtered[l].shape[1], filtered[l].shape[0]))
             upsampled += filtered[l][:, :, j]
         output[:, :, j] = upsampled
@@ -106,6 +108,10 @@ while True:
     output = np.clip(output, 0, 1)
 
     amplified_frame = (output * 255).astype(np.uint8)
+
+    end_time = time.time()
+    delay_ms = (end_time - start_time) * 1000
+    print("延迟: %.2fms" % delay_ms)
 
     # 显示放大帧
     cv2.imshow('Amplified Camera', amplified_frame)

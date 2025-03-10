@@ -48,7 +48,7 @@ def amplify_spatial_lpyr_temporal_butter(frame, alpha, lambda_c, fl, fh, samplin
         currAlpha = currAlpha * exaggeration_factor
 
         if l == nLevels - 1 or l == 0:
-            filtered[l] = 0
+            filtered[l] = np.zeros_like(filtered[l])
         elif currAlpha > alpha:
             filtered[l] = alpha * filtered[l]
         else:

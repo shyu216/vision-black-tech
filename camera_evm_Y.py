@@ -18,7 +18,7 @@ def build_laplacian_pyramid(image, levels):
     
     return laplacian_pyramid
 
-alpha = 1000
+alpha = 20
 lambda_c = 16
 r1 = 0.5
 r2 = 0.05

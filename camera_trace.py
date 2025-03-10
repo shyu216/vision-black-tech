@@ -2,6 +2,9 @@ import cv2
 import numpy as np
 import copy
 import time
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+from collections import deque
 
 def build_laplacian_pyramid(image, levels):
     gaussian_pyramid = [image]
@@ -18,7 +21,7 @@ def build_laplacian_pyramid(image, levels):
     
     return laplacian_pyramid
 
-alpha = 1000
+alpha = 10
 lambda_c = 16
 r1 = 0.5
 r2 = 0.05
@@ -32,10 +35,16 @@ if not cap.isOpened():
 
 # 初始化
 ret, frame = cap.read()
+(h, w) = frame.shape[:2]
+frame = cv2.resize(frame, (w//2, h//2))
 if not ret:
     print("无法接收帧 (stream end?). Exiting ...")
     cap.release()
     exit()
+
+# 手动选择 ROI
+roi = cv2.selectROI('Select ROI', frame, fromCenter=False, showCrosshair=True)
+cv2.destroyWindow('Select ROI')
 
 # 直接转换为YCrCb并归一化
 frame_ycrcb = cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb).astype(np.float32) / 255.0
@@ -44,13 +53,24 @@ pyr = build_laplacian_pyramid(frame_y, levels=nlevels)
 lowpass1 = copy.deepcopy(pyr)
 lowpass2 = copy.deepcopy(pyr)
 
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        print("无法接收帧 (stream end?). Exiting ...")
-        break
+# 初始化 matplotlib 图形
+fig, ax = plt.subplots()
+intensity_queue = deque(maxlen=100)
+line, = ax.plot([], [], lw=2)
+ax.set_xlim(0, 100)
+ax.set_ylim(-0.1, 0.1)
+ax.set_xlabel('Frame')
+ax.set_ylabel('Average Intensity')
 
-    # cv2.imshow('Original Camera', frame)
+def init():
+    line.set_data([], [])
+    return line,
+
+def update(frame):
+    ret, frame = cap.read()
+    frame = cv2.resize(frame, (w//2, h//2))
+    if not ret:
+        return line,
 
     start_time = time.time()
 
@@ -91,53 +111,33 @@ while True:
         upsampled += filtered[l]
     
     # 合成并转换颜色空间
-    frame_ycrcb[:, :, 0] = frame_y + upsampled
+    frame_ycrcb[:, :, 0] = upsampled
     output = cv2.cvtColor(frame_ycrcb, cv2.COLOR_YCrCb2BGR)
+
+    # 计算 ROI 的平均强度
+    roi_intensity = np.mean(output[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2]), 0])
+    intensity_queue.append(roi_intensity)
+
+    # 更新 matplotlib 图形
+    line.set_data(range(len(intensity_queue)), intensity_queue)
+    ax.set_xlim(0, len(intensity_queue))
+    ax.set_ylim(-0.1, 0.1)
 
     print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
     cv2.putText(output, f"Delay: {(time.time() - start_time)*1000:.2f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    cv2.putText(output, f"ROI Average Intensity: {roi_intensity:.2f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     
-    # # 旋转45度
-    # (h, w) = output.shape[:2]
-    # center = (w // 2, h // 2)
-    # M = cv2.getRotationMatrix2D(center, 45, 1.0)
-    # output = cv2.warpAffine(output, M, (w, h))
-
-    # # 裁剪中心50%区域
-    # output = output[h//4:h//4*3, w//4:w//4*3]
-
-    
-    # # 傅立叶变换
-    # f = np.fft.fft2(output[:, :, 0])
-    # fshift = np.fft.fftshift(f)
-    # magnitude_spectrum = 20 * np.log(np.abs(fshift) + 1)  # 加1避免log(0)
-
-    # # 显示频率幅度图
-    # magnitude_spectrum_normalized = cv2.normalize(magnitude_spectrum, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
-    # cv2.imshow('Frequency Spectrum', magnitude_spectrum_normalized)
-
-    # # 捕捉频率图中的周期性变化
-    # # 1. 提取水平方向的频率分量
-    # horizontal_profile = np.mean(magnitude_spectrum, axis=0)
-
-    # # 2. 使用峰值检测算法找到周期性变化的频率
-    # peaks, _ = find_peaks(horizontal_profile, height=np.mean(horizontal_profile) * 1.5, distance=10)
-
-    # # 3. 在频率图上标记峰值
-    # magnitude_spectrum_marked = cv2.cvtColor(magnitude_spectrum_normalized, cv2.COLOR_GRAY2BGR)
-    # for peak in peaks:
-    #     cv2.line(magnitude_spectrum_marked, (peak, 0), (peak, magnitude_spectrum_marked.shape[0]), (0, 0, 255), 1)
-
-    # cv2.imshow('Frequency Spectrum with Peaks', magnitude_spectrum_marked)
-
-    # # 打印检测到的周期性频率
-    # if len(peaks) > 0:
-    #     print(f"检测到的周期性频率: {peaks}")
-
     cv2.imshow('Amplified Camera', output)
 
     if cv2.waitKey(1) == ord('q'):
-        break
+        plt.close(fig)
+        cap.release()
+        cv2.destroyAllWindows()
+        return line,
 
-cap.release()
-cv2.destroyAllWindows()
+    return line,
+
+# 使用 FuncAnimation 实现实时更新
+ani = FuncAnimation(fig, update, init_func=init, blit=True, interval=50)
+
+plt.show()

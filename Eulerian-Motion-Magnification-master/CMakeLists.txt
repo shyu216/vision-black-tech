@@ -21,11 +21,11 @@ project(Eulerian_Motion_Magnification)
 message(STATUS "$OpenCV_DIR: ${OpenCV_DIR}")
 find_package(OpenCV REQUIRED core imgproc objdetect highgui)
 find_package(OpenMP)
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Widgets Gui)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets Gui)
 
 # Using CXX Flags: Optimization (-O3) and OpenMP 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -std=c++17")
 
 # Includes
 include_directories("include")
@@ -48,4 +48,6 @@ target_link_libraries(${PROJECT_NAME}
     ${OpenCV_LIBS}
     ${OpenMP_LIBS}
     Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Gui
 )

@@ -17,15 +17,11 @@ def build_laplacian_pyramid(image, levels):
     
     return laplacian_pyramid
 
-alpha = 30
+alpha = 5
 lambda_c = 16
-fl = 0.4
-fh = 3
-samplingRate = 30
+r1 = 0.4
+r2 = 0.05
 chromAttenuation = 0.1
-
-low_b, low_a = butter(1, fl / (samplingRate / 2), btype='low')
-high_b, high_a = butter(1, fh / (samplingRate / 2), btype='low')
 
 # 打开摄像头
 cap = cv2.VideoCapture(0)
@@ -34,7 +30,7 @@ if not cap.isOpened():
     print("无法打开摄像头")
     exit()
 
-# 初始化 pyr_prev
+# 初始化
 ret, frame = cap.read()
 if not ret:
     print("无法接收帧 (stream end?). Exiting ...")
@@ -43,11 +39,12 @@ if not ret:
 
 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) / 255.0
 frame = cv2.cvtColor(frame.astype(np.float32), cv2.COLOR_RGB2YCrCb)
-pyr = build_laplacian_pyramid(frame[:, :, 0], 3)
-pyr = [np.stack([pyr[i]] * 3, axis=-1) for i in range(len(pyr))]
-lowpass1 = pyr.copy()
-lowpass2 = pyr.copy()
-pyr_prev = pyr.copy()
+pyr_y = build_laplacian_pyramid(frame[:, :, 0], levels=3)
+pyr_cr = build_laplacian_pyramid(frame[:, :, 1], levels=3)
+pyr_cb = build_laplacian_pyramid(frame[:, :, 2], levels=3)
+pyr = [np.stack([pyr_y[i], pyr_cr[i], pyr_cb[i]], axis=-1) for i in range(len(pyr_y))]
+lowpass1 = [np.copy(p) for p in pyr]
+lowpass2 = [np.copy(p) for p in pyr]
 
 while True:
     # 读取摄像头帧
@@ -61,17 +58,17 @@ while True:
 
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) / 255.0
     frame = cv2.cvtColor(frame.astype(np.float32), cv2.COLOR_RGB2YCrCb)
-    pyr = build_laplacian_pyramid(frame[:, :, 0], 3)
-    pyr = [np.stack([pyr[i]] * 3, axis=-1) for i in range(len(pyr))]
+    pyr_y = build_laplacian_pyramid(frame[:, :, 0], levels=3)
+    pyr_cr = build_laplacian_pyramid(frame[:, :, 1], levels=3)
+    pyr_cb = build_laplacian_pyramid(frame[:, :, 2], levels=3)
+    pyr = [np.stack([pyr_y[i], pyr_cr[i], pyr_cb[i]], axis=-1) for i in range(len(pyr_y))]
 
     nLevels = len(pyr)
 
     # temporal filtering
-    lowpass1 = [(-high_b[1] * lowpass1[j] + high_a[0] * pyr[j] + high_a[1] * pyr_prev[j]) / high_b[0] for j in range(nLevels)]
-    lowpass2 = [(-low_b[1] * lowpass2[j] + low_a[0] * pyr[j] + low_a[1] * pyr_prev[j]) / low_b[0] for j in range(nLevels)]
-    filtered = [lowpass1[j] - lowpass2[j] for j in range(nLevels)]
-
-    pyr_prev = pyr.copy()
+    lowpass1 = [(1 - r1) * lp1 + r1 * p for lp1, p in zip(lowpass1, pyr)]
+    lowpass2 = [(1 - r2) * lp2 + r2 * p for lp2, p in zip(lowpass2, pyr)]
+    filtered = [lp1 - lp2 for lp1, lp2 in zip(lowpass1, lowpass2)]
 
     # amplify each spatial frequency bands
     delta = lambda_c / 8 / (1 + alpha)

@@ -70,6 +70,7 @@ def amplify_spatial_lpyr_temporal_butter(frame, alpha, lambda_c, fl, fh, samplin
 
     output = frame + output
     output = cv2.cvtColor(output, cv2.COLOR_YCrCb2RGB)
+    output = cv2.cvtColor(output, cv2.COLOR_RGB2BGR)
     output = np.clip(output, 0, 1)
 
     return (output * 255).astype(np.uint8)

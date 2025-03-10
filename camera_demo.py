@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import copy
+import time
 
 def build_laplacian_pyramid(image, levels):
     gaussian_pyramid = [image]
@@ -16,34 +18,90 @@ def build_laplacian_pyramid(image, levels):
     
     return laplacian_pyramid
 
-# 打开摄像头
-cap = cv2.VideoCapture(0)
+alpha = 1000
+lambda_c = 16
+r1 = 0.5
+r2 = 0.05
+chromAttenuation = 0.1
+nlevels = 3
 
+cap = cv2.VideoCapture(0)
 if not cap.isOpened():
     print("无法打开摄像头")
     exit()
 
+# 初始化
+ret, frame = cap.read()
+if not ret:
+    print("无法接收帧 (stream end?). Exiting ...")
+    cap.release()
+    exit()
+
+# 直接转换为YCrCb并归一化
+frame = cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb).astype(np.float32) / 255.0
+pyr = build_laplacian_pyramid(frame, levels=nlevels)
+lowpass1 = copy.deepcopy(pyr)
+lowpass2 = copy.deepcopy(pyr)
+
 while True:
-    # 读取摄像头帧
     ret, frame = cap.read()
     if not ret:
         print("无法接收帧 (stream end?). Exiting ...")
         break
 
-    # 构建拉普拉斯金字塔
-    laplacian_pyramid = build_laplacian_pyramid(frame, 3)
+    # cv2.imshow('Original Camera', frame)
 
-    # 显示原始帧
-    cv2.imshow('Original Camera', frame)
+    start_time = time.time()
 
-    # 显示拉普拉斯金字塔
-    for i, laplacian in enumerate(laplacian_pyramid):
-        cv2.imshow(f'Laplacian Pyramid {i}', laplacian)
+    # 颜色空间转换和归一化合并处理
+    frame_ycrcb = cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb).astype(np.float32) / 255.0
+    pyr = build_laplacian_pyramid(frame_ycrcb, levels=nlevels)
 
-    # 按下 'q' 键退出
+    # 时域滤波（原地操作优化）
+    for i in range(nlevels):
+        cv2.addWeighted(lowpass1[i], 1 - r1, pyr[i], r1, 0, dst=lowpass1[i])
+        cv2.addWeighted(lowpass2[i], 1 - r2, pyr[i], r2, 0, dst=lowpass2[i])
+    
+    filtered = [lp1 - lp2 for lp1, lp2 in zip(lowpass1, lowpass2)]
+
+    # 空间频率放大（预计算参数优化）
+    delta = lambda_c / 8 / (1 + alpha)
+    exaggeration_factor = 2
+    lambda_ = (frame.shape[0]**2 + frame.shape[1]**2)**0.5 / 3
+
+    for l in range(nlevels):
+        if l == 0 or l == nlevels - 1:
+            filtered[l].fill(0)
+            continue
+        
+        currAlpha = (lambda_ / delta / 8 - 1) * exaggeration_factor
+        if currAlpha > alpha:
+            filtered[l] *= alpha
+        else:
+            filtered[l] *= currAlpha
+        
+        lambda_ /= 2
+
+    # 金字塔重建（多通道同时处理）
+    upsampled = filtered[0].copy()
+    for l in range(1, nlevels):
+        upsampled = cv2.pyrUp(upsampled, dstsize=(filtered[l].shape[1], filtered[l].shape[0]))
+        upsampled += filtered[l]
+    
+    # 色度通道衰减
+    upsampled[..., 1] *= chromAttenuation
+    upsampled[..., 2] *= chromAttenuation
+
+    # 合成并转换颜色空间
+    # output = cv2.cvtColor(frame_ycrcb + upsampled, cv2.COLOR_YCrCb2BGR)
+    output = cv2.cvtColor(upsampled, cv2.COLOR_YCrCb2BGR)
+
+    # print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
+    cv2.putText(output, f"Delay: {(time.time() - start_time)*1000:.2f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    cv2.imshow('Amplified Camera', output)
+
     if cv2.waitKey(1) == ord('q'):
         break
 
-# 释放摄像头并关闭窗口
 cap.release()
 cv2.destroyAllWindows()

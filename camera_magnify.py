@@ -17,7 +17,43 @@ def build_laplacian_pyramid(image, levels):
     
     return laplacian_pyramid
 
-def amplify_spatial_lpyr_temporal_butter(frame, alpha, lambda_c, fl, fh, samplingRate, chromAttenuation):
+alpha = 30
+lambda_c = 16
+fl = 0.4
+fh = 3
+samplingRate = 30
+chromAttenuation = 0.1
+
+# 打开摄像头
+cap = cv2.VideoCapture(0)
+
+if not cap.isOpened():
+    print("无法打开摄像头")
+    exit()
+
+# 初始化 pyr_prev
+ret, frame = cap.read()
+if not ret:
+    print("无法接收帧 (stream end?). Exiting ...")
+    cap.release()
+    exit()
+
+frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) / 255.0
+frame = cv2.cvtColor(frame.astype(np.float32), cv2.COLOR_RGB2YCrCb)
+pyr = build_laplacian_pyramid(frame[:, :, 0], 3)
+pyr = [np.stack([pyr[i]] * 3, axis=-1) for i in range(len(pyr))]
+lowpass1 = pyr.copy()
+lowpass2 = pyr.copy()
+pyr_prev = pyr.copy()
+
+while True:
+    # 读取摄像头帧
+    ret, frame = cap.read()
+    if not ret:
+        print("无法接收帧 (stream end?). Exiting ...")
+        break
+
+    # 放大视频
     low_b, low_a = butter(1, fl / (samplingRate / 2), btype='low')
     high_b, high_a = butter(1, fh / (samplingRate / 2), btype='low')
 
@@ -25,9 +61,6 @@ def amplify_spatial_lpyr_temporal_butter(frame, alpha, lambda_c, fl, fh, samplin
     frame = cv2.cvtColor(frame.astype(np.float32), cv2.COLOR_RGB2YCrCb)
     pyr = build_laplacian_pyramid(frame[:, :, 0], 3)
     pyr = [np.stack([pyr[i]] * 3, axis=-1) for i in range(len(pyr))]
-    lowpass1 = pyr.copy()
-    lowpass2 = pyr.copy()
-    pyr_prev = pyr.copy()
 
     nLevels = len(pyr)
 
@@ -73,24 +106,7 @@ def amplify_spatial_lpyr_temporal_butter(frame, alpha, lambda_c, fl, fh, samplin
     output = cv2.cvtColor(output, cv2.COLOR_RGB2BGR)
     output = np.clip(output, 0, 1)
 
-    return (output * 255).astype(np.uint8)
-
-# 打开摄像头
-cap = cv2.VideoCapture(0)
-
-if not cap.isOpened():
-    print("无法打开摄像头")
-    exit()
-
-while True:
-    # 读取摄像头帧
-    ret, frame = cap.read()
-    if not ret:
-        print("无法接收帧 (stream end?). Exiting ...")
-        break
-
-    # 放大视频
-    amplified_frame = amplify_spatial_lpyr_temporal_butter(frame, 30, 16, 0.4, 3, 30, 0.1)
+    amplified_frame = (output * 255).astype(np.uint8)
 
     # 显示原始帧
     cv2.imshow('Original Camera', frame)

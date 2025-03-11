@@ -21,7 +21,7 @@ def build_laplacian_pyramid(image, levels):
     
     return laplacian_pyramid
 
-alpha = 10
+alpha = 1000
 lambda_c = 16
 r1 = 0.5
 r2 = 0.05
@@ -61,7 +61,7 @@ fig, ax = plt.subplots()
 intensity_queues = [deque(maxlen=100) for _ in range(3)]
 lines = [ax.plot([], [], lw=2, label=f'ROI {i+1}')[0] for i in range(3)]
 ax.set_xlim(0, 100)
-ax.set_ylim(-0.1, 0.1)
+ax.set_ylim(-1, 1)
 ax.set_xlabel('Frame')
 ax.set_ylabel('Average Intensity')
 ax.legend()
@@ -129,7 +129,7 @@ def update(frame):
     for i, line in enumerate(lines):
         line.set_data(range(len(intensity_queues[i])), intensity_queues[i])
     ax.set_xlim(0, max(len(intensity_queues[0]), 100))
-    ax.set_ylim(-0.1, 0.1)
+    ax.set_ylim(-1, 1)
 
     print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
     cv2.putText(output, f"Delay: {(time.time() - start_time)*1000:.2f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)

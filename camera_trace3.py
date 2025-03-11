@@ -42,9 +42,12 @@ if not ret:
     cap.release()
     exit()
 
-# 手动选择 ROI
-roi = cv2.selectROI('Select ROI', frame, fromCenter=False, showCrosshair=True)
-cv2.destroyWindow('Select ROI')
+# 手动选择三个 ROI
+rois = []
+for i in range(3):
+    roi = cv2.selectROI(f'Select ROI {i+1}', frame, fromCenter=False, showCrosshair=True)
+    rois.append(roi)
+    cv2.destroyWindow(f'Select ROI {i+1}')
 
 # 直接转换为YCrCb并归一化
 frame_ycrcb = cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb).astype(np.float32) / 255.0
@@ -55,22 +58,24 @@ lowpass2 = copy.deepcopy(pyr)
 
 # 初始化 matplotlib 图形
 fig, ax = plt.subplots()
-intensity_queue = deque(maxlen=100)
-line, = ax.plot([], [], lw=2)
+intensity_queues = [deque(maxlen=100) for _ in range(3)]
+lines = [ax.plot([], [], lw=2, label=f'ROI {i+1}')[0] for i in range(3)]
 ax.set_xlim(0, 100)
 ax.set_ylim(-0.1, 0.1)
 ax.set_xlabel('Frame')
 ax.set_ylabel('Average Intensity')
+ax.legend()
 
 def init():
-    line.set_data([], [])
-    return line,
+    for line in lines:
+        line.set_data([], [])
+    return lines
 
 def update(frame):
     ret, frame = cap.read()
     frame = cv2.resize(frame, (w//2, h//2))
     if not ret:
-        return line,
+        return lines
 
     start_time = time.time()
 
@@ -114,32 +119,42 @@ def update(frame):
     frame_ycrcb[:, :, 0] = upsampled
     output = cv2.cvtColor(frame_ycrcb, cv2.COLOR_YCrCb2BGR)
 
-    # 计算 ROI 的平均强度
+    # 计算每个 ROI 的平均强度
     roi_frame = upsampled
-    roi_intensity = np.mean(roi_frame[roi[1]:roi[1]+roi[3], roi[0]:roi[0]+roi[2]])
-    intensity_queue.append(roi_intensity)
+    for i, roi in enumerate(rois):
+        roi_intensity = np.mean(roi_frame[roi[1]:roi[1]+roi[3], roi[0]:roi[0]+roi[2]])
+        intensity_queues[i].append(roi_intensity)
 
     # 更新 matplotlib 图形
-    line.set_data(range(len(intensity_queue)), intensity_queue)
-    ax.set_xlim(0, len(intensity_queue))
+    for i, line in enumerate(lines):
+        line.set_data(range(len(intensity_queues[i])), intensity_queues[i])
+    ax.set_xlim(0, max(len(intensity_queues[0]), 100))
     ax.set_ylim(-0.1, 0.1)
 
     print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
     cv2.putText(output, f"Delay: {(time.time() - start_time)*1000:.2f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-    cv2.putText(output, f"ROI Average Intensity: {roi_intensity:.2f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
-    # 显示 ROI
-    cv2.rectangle(output, (roi[0], roi[1]), (roi[0]+roi[2], roi[1]+roi[3]), (0, 255, 0), 2)
+    for i, roi in enumerate(rois):
+        roi_intensity = intensity_queues[i][-1]
+        cv2.putText(output, f"ROI {i+1} Intensity: {roi_intensity:.2f}", (10, 60 + i*30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        cv2.rectangle(output, (roi[0], roi[1]), (roi[0]+roi[2], roi[1]+roi[3]), (0, 255, 0), 2)
+        cv2.putText(output, f"ROI {i+1}", (roi[0], roi[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
     
     cv2.imshow('Amplified Camera', output)
 
-    if cv2.waitKey(1) == ord('q'):
+    key = cv2.waitKey(1)
+    if key == ord('s'):
+        # 手动选择 ROI
+        for i in range(3):
+            roi = cv2.selectROI(f'Select ROI {i+1}', frame, fromCenter=False, showCrosshair=True)
+            rois[i] = roi
+            cv2.destroyWindow(f'Select ROI {i+1}')
+    elif key == ord('q'):
         plt.close(fig)
         cap.release()
         cv2.destroyAllWindows()
-        return line,
+        return lines
 
-    return line,
+    return lines
 
 # 使用 FuncAnimation 实现实时更新
 ani = FuncAnimation(fig, update, init_func=init, blit=True, interval=50)

@@ -62,7 +62,7 @@ def process_pyramid(pyr, lowpass1, lowpass2, r1, r2, alpha, lambda_c, nlevels, d
     amplified_depth = depth_image + upsampled
     return amplified_depth
 
-alpha = 20
+alpha = 50
 lambda_c = 16
 r1 = 0.5
 r2 = 0.05

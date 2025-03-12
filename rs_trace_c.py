@@ -71,13 +71,15 @@ nlevels = 4
 
 pipeline = rs.pipeline()
 config = rs.config()
+# bug: only enable color stream will fail to get frames
 config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
 config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-
 pipeline.start(config)
 
-frames = pipeline.wait_for_frames()
+
+frames = pipeline.wait_for_frames(timeout_ms=5000)
 color_frame = frames.get_color_frame()
+depth_frame = frames.get_depth_frame()
 color_image = np.asanyarray(color_frame.get_data())
 if color_image is None:
     print("无法接收帧 (stream end?). Exiting ...")
@@ -87,10 +89,12 @@ if color_image is None:
 roi = cv2.selectROI('Select ROI', color_image, fromCenter=False, showCrosshair=True)
 cv2.destroyWindow('Select ROI')
 
-pyr = build_laplacian_pyramid(depth_image, levels=nlevels)
+frame_ycrcb = cv2.cvtColor(color_image, cv2.COLOR_BGR2YCrCb).astype(np.float32) / 255.0
+frame_y = frame_ycrcb[:, :, 0]
+pyr = build_laplacian_pyramid(frame_y, levels=nlevels)
 laplowpass1 = copy.deepcopy(pyr)
 laplowpass2 = copy.deepcopy(pyr)
-pyr = build_gaussian_pyramid(depth_image, levels=nlevels)
+pyr = build_gaussian_pyramid(frame_y, levels=nlevels)
 gaulowpass1 = copy.deepcopy(pyr)
 gaulowpass2 = copy.deepcopy(pyr)
 
@@ -112,9 +116,11 @@ def init():
 def update(frame):
     frames = pipeline.wait_for_frames()
     color_frame = frames.get_color_frame()
-    color_image = np.asanyarray(color_frame.get_data())
+    depth_frame = frames.get_depth_frame()
     if not color_frame:
         return lines
+
+    color_image = np.asanyarray(color_frame.get_data())
 
     frame_ycrcb = cv2.cvtColor(color_image, cv2.COLOR_BGR2YCrCb).astype(np.float32) / 255.0
     frame_y = frame_ycrcb[:, :, 0]
@@ -133,8 +139,6 @@ def update(frame):
 
     start_time = time.time()
 
-    frame_ycrcb = cv2.cvtColor((color_image * 255).astype(np.uint8), cv2.COLOR_BGR2YCrCb).astype(np.float32) / 255.0
-    frame_y = frame_ycrcb[:, :, 0]
     pyr = build_laplacian_pyramid(frame_y, levels=nlevels)
     amplified_y = process_pyramid(pyr, laplowpass1, laplowpass2, r1, r2, alpha, lambda_c, nlevels, frame_y)
     frame_ycrcb[:, :, 0] = amplified_y
@@ -151,7 +155,7 @@ def update(frame):
 
     pyr = build_gaussian_pyramid(frame_y, levels=nlevels)
     amplified_y = process_pyramid(pyr, gaulowpass1, gaulowpass2, r1, r2, alpha, lambda_c, nlevels, frame_y)
-    frame_ycrcb[:, :, 0] = amplified_y
+    frame_ycrcb[:, :, 0] = frame_y
     amplified_color_image = cv2.cvtColor(frame_ycrcb, cv2.COLOR_YCrCb2BGR)
     roi_intensity_gau = np.mean(amplified_y[roi[1]:roi[1]+roi[3], roi[0]:roi[0]+roi[2]])
     intensity_queues[2].append(roi_intensity_gau)

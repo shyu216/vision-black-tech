@@ -95,6 +95,7 @@ cv2.destroyWindow('Select ROI')
 pyr = build_laplacian_pyramid(depth_image, levels=nlevels)
 laplowpass1 = copy.deepcopy(pyr)
 laplowpass2 = copy.deepcopy(pyr)
+pyr = build_gaussian_pyramid(depth_image, levels=nlevels)
 gaulowpass1 = copy.deepcopy(pyr)
 gaulowpass2 = copy.deepcopy(pyr)
 

@@ -125,13 +125,10 @@ def update(frame):
     frame_ycrcb = cv2.cvtColor(color_image, cv2.COLOR_BGR2YCrCb).astype(np.float32) / 255.0
     frame_y = frame_ycrcb[:, :, 0]
 
-    roi_frame = frame_y
-    roi_intensity = np.mean(roi_frame[roi[1]:roi[1]+roi[3], roi[0]:roi[0]+roi[2]])
+    roi_intensity = np.mean(frame_y[roi[1]:roi[1]+roi[3], roi[0]:roi[0]+roi[2]])
     intensity_queues[0].append(roi_intensity)
 
     lines[0].set_data(range(len(intensity_queues[0])), intensity_queues[0])
-    ax.set_xlim(0, len(intensity_queues[0]))
-    ax.set_ylim(-0.1, 0.1)
 
     cv2.putText(color_image, f"ROI Average Intensity: {roi_intensity:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     cv2.rectangle(color_image, (roi[0], roi[1]), (roi[0]+roi[2], roi[1]+roi[3]), (0, 255, 0), 2)
@@ -155,7 +152,7 @@ def update(frame):
 
     pyr = build_gaussian_pyramid(frame_y, levels=nlevels)
     amplified_y = process_pyramid(pyr, gaulowpass1, gaulowpass2, r1, r2, alpha, lambda_c, nlevels, frame_y)
-    frame_ycrcb[:, :, 0] = frame_y
+    frame_ycrcb[:, :, 0] = amplified_y
     amplified_color_image = cv2.cvtColor(frame_ycrcb, cv2.COLOR_YCrCb2BGR)
     roi_intensity_gau = np.mean(amplified_y[roi[1]:roi[1]+roi[3], roi[0]:roi[0]+roi[2]])
     intensity_queues[2].append(roi_intensity_gau)

@@ -130,8 +130,6 @@ def update(frame):
     depth_queues[0].append(roi_depth)
 
     lines[0].set_data(range(len(depth_queues[0])), depth_queues[0])
-    ax.set_xlim(0, len(depth_queues[0]))
-    ax.set_ylim(-0.1, 0.1)
 
     cv2.putText(depth_colormap, f"ROI Average Depth: {roi_depth:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     cv2.rectangle(depth_colormap, (roi[0], roi[1]), (roi[0]+roi[2], roi[1]+roi[3]), (0, 255, 0), 2)

@@ -131,11 +131,11 @@ def update(frame):
     ax.set_xlim(0, max(len(intensity_queues[0]), 100))
     ax.set_ylim(min(min(intensity_queues[0]), min(intensity_queues[1]), min(intensity_queues[2])), max(max(intensity_queues[0]), max(intensity_queues[1]), max(intensity_queues[2])) * 2)
 
-    print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
+    # print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
     cv2.putText(output, f"Delay: {(time.time() - start_time)*1000:.2f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     for i, roi in enumerate(rois):
         roi_intensity = intensity_queues[i][-1]
-        cv2.putText(output, f"ROI {i+1} Intensity: {roi_intensity:.2f}", (10, 60 + i*30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        cv2.putText(output, f"ROI {i+1} Intensity: {roi_intensity:.4f}", (10, 60 + i*30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         cv2.rectangle(output, (roi[0], roi[1]), (roi[0]+roi[2], roi[1]+roi[3]), (0, 255, 0), 2)
         cv2.putText(output, f"ROI {i+1}", (roi[0], roi[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
     

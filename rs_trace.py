@@ -143,8 +143,8 @@ def update(frame):
     depth_queues[1].append(roi_depth_lap)
 
     depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(amplified_depth, alpha=color_scale_factor), cv2.COLORMAP_JET)
-    print(f"延迟: {(time.time() - start_time)*1000:.4f}ms")
-    cv2.putText(depth_colormap, f"Delay: {(time.time() - start_time)*1000:.4f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    # print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
+    cv2.putText(depth_colormap, f"Delay: {(time.time() - start_time)*1000:.2f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     cv2.putText(depth_colormap, f"ROI Average Depth: {roi_depth_lap:.4f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     cv2.rectangle(depth_colormap, (roi[0], roi[1]), (roi[0]+roi[2], roi[1]+roi[3]), (0, 255, 0), 2)
     cv2.imshow('Laplacian Pyramid Amplified Depth Image', depth_colormap)
@@ -157,8 +157,8 @@ def update(frame):
     depth_queues[2].append(roi_depth_gau)
 
     depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(amplified_depth, alpha=color_scale_factor), cv2.COLORMAP_JET)
-    print(f"延迟: {(time.time() - start_time)*1000:.4f}ms")
-    cv2.putText(depth_colormap, f"Delay: {(time.time() - start_time)*1000:.4f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    # print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
+    cv2.putText(depth_colormap, f"Delay: {(time.time() - start_time)*1000:.2f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     cv2.putText(depth_colormap, f"ROI Average Depth: {roi_depth_gau:.4f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     cv2.rectangle(depth_colormap, (roi[0], roi[1]), (roi[0]+roi[2], roi[1]+roi[3]), (0, 255, 0), 2)
     cv2.imshow('Gaussian Pyramid Amplified Depth Image', depth_colormap)

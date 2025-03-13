@@ -95,7 +95,7 @@ while True:
     # 合成并转换颜色空间
     output = cv2.cvtColor(frame_ycrcb + upsampled, cv2.COLOR_YCrCb2BGR)
 
-    print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
+    # print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
     # cv2.putText(output, f"Delay: {(time.time() - start_time)*1000:.2f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     cv2.imshow('Amplified Camera', output)
 

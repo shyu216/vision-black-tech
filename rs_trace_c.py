@@ -143,7 +143,7 @@ def update(frame):
     roi_intensity_lap = np.mean(amplified_y[roi[1]:roi[1]+roi[3], roi[0]:roi[0]+roi[2]])
     intensity_queues[1].append(roi_intensity_lap)
 
-    cv2.putText(amplified_color_image, f"Delay: {(time.time() - start_time)*1000:.4f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    cv2.putText(amplified_color_image, f"Delay: {(time.time() - start_time)*1000:.2f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     cv2.putText(amplified_color_image, f"ROI Average Intensity: {roi_intensity_lap:.4f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     cv2.rectangle(amplified_color_image, (roi[0], roi[1]), (roi[0]+roi[2], roi[1]+roi[3]), (0, 255, 0), 2)
     cv2.imshow('Laplacian Pyramid Amplified Image', amplified_color_image)
@@ -157,7 +157,7 @@ def update(frame):
     roi_intensity_gau = np.mean(amplified_y[roi[1]:roi[1]+roi[3], roi[0]:roi[0]+roi[2]])
     intensity_queues[2].append(roi_intensity_gau)
 
-    cv2.putText(amplified_color_image, f"Delay: {(time.time() - start_time)*1000:.4f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    cv2.putText(amplified_color_image, f"Delay: {(time.time() - start_time)*1000:.2f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     cv2.putText(amplified_color_image, f"ROI Average Intensity: {roi_intensity_gau:.4f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     cv2.rectangle(amplified_color_image, (roi[0], roi[1]), (roi[0]+roi[2], roi[1]+roi[3]), (0, 255, 0), 2)
     cv2.imshow('Gaussian Pyramid Amplified Image', amplified_color_image)

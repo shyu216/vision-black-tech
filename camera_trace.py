@@ -21,7 +21,7 @@ def build_laplacian_pyramid(image, levels):
     
     return laplacian_pyramid
 
-alpha = 10
+alpha = 20
 lambda_c = 16
 r1 = 0.5
 r2 = 0.05
@@ -122,11 +122,11 @@ def update(frame):
     # 更新 matplotlib 图形
     line.set_data(range(len(intensity_queue)), intensity_queue)
     ax.set_xlim(0, len(intensity_queue))
-    ax.set_ylim(-0.1, 0.1)
+    ax.set_ylim(min(intensity_queue), max(intensity_queue) * 2)
 
-    print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
+    # print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
     cv2.putText(output, f"Delay: {(time.time() - start_time)*1000:.2f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-    cv2.putText(output, f"ROI Average Intensity: {roi_intensity:.2f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    cv2.putText(output, f"ROI Average Intensity: {roi_intensity:.4f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
     # 显示 ROI
     cv2.rectangle(output, (roi[0], roi[1]), (roi[0]+roi[2], roi[1]+roi[3]), (0, 255, 0), 2)

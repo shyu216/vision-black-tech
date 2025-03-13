@@ -124,7 +124,7 @@ def update(frame):
     ax.set_xlim(0, len(intensity_queue))
     ax.set_ylim(-0.1, 0.1)
 
-    print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
+    # print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
     cv2.putText(output, f"Delay: {(time.time() - start_time)*1000:.2f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     cv2.putText(output, f"ROI Average Intensity: {roi_intensity:.2f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 

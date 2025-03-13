@@ -94,7 +94,7 @@ while True:
     frame_ycrcb[:, :, 0] = frame_y + upsampled
     output = cv2.cvtColor(frame_ycrcb, cv2.COLOR_YCrCb2BGR)
 
-    print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
+    # print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
     cv2.putText(output, f"Delay: {(time.time() - start_time)*1000:.2f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     
     # # 旋转45度

@@ -110,7 +110,7 @@ try:
         # 将深度图像归一化到 0-255 范围内以便显示
         depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(amplified_depth, alpha=color_scale_factor), cv2.COLORMAP_JET)
 
-        print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
+        # print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
         cv2.putText(depth_colormap, f"Delay: {(time.time() - start_time)*1000:.2f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         
         cv2.imshow('Amplified Depth Image', depth_colormap)

@@ -103,8 +103,8 @@ fig, ax = plt.subplots()
 depth_queues = [deque(maxlen=100) for _ in range(3)]
 labels = ['Origin', 'Lap Pyr Amplified', 'Gau Pyr Amplified']
 lines = [ax.plot([], [], lw=2, label=f'{label}')[0] for label in labels]
-ax.set_xlim(0, 100)
-ax.set_ylim(-1, 1)
+# ax.set_xlim(0, 100)
+# ax.set_ylim(-1, 1)
 ax.set_xlabel('Frame')
 ax.set_ylabel('Average depth')
 ax.legend()
@@ -125,7 +125,7 @@ def update(frame):
 
     depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=color_scale_factor), cv2.COLORMAP_JET)
 
-    roi_frame = depth_image
+    roi_frame = copy.deepcopy(depth_image)
     roi_depth = np.mean(roi_frame[roi[1]:roi[1]+roi[3], roi[0]:roi[0]+roi[2]])
     depth_queues[0].append(roi_depth)
 
@@ -145,7 +145,7 @@ def update(frame):
     depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(amplified_depth, alpha=color_scale_factor), cv2.COLORMAP_JET)
     print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
     cv2.putText(depth_colormap, f"Delay: {(time.time() - start_time)*1000:.2f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-    cv2.putText(depth_colormap, f"ROI Average Depth: {roi_depth:.2f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    cv2.putText(depth_colormap, f"ROI Average Depth: {roi_depth_lap:.2f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     cv2.rectangle(depth_colormap, (roi[0], roi[1]), (roi[0]+roi[2], roi[1]+roi[3]), (0, 255, 0), 2)
     cv2.imshow('Laplacian Pyramid Amplified Depth Image', depth_colormap)
 
@@ -159,7 +159,7 @@ def update(frame):
     depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(amplified_depth, alpha=color_scale_factor), cv2.COLORMAP_JET)
     print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
     cv2.putText(depth_colormap, f"Delay: {(time.time() - start_time)*1000:.2f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-    cv2.putText(depth_colormap, f"ROI Average Depth: {roi_depth:.2f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    cv2.putText(depth_colormap, f"ROI Average Depth: {roi_depth_gau:.2f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     cv2.rectangle(depth_colormap, (roi[0], roi[1]), (roi[0]+roi[2], roi[1]+roi[3]), (0, 255, 0), 2)
     cv2.imshow('Gaussian Pyramid Amplified Depth Image', depth_colormap)
 

@@ -21,7 +21,7 @@ def build_laplacian_pyramid(image, levels):
     
     return laplacian_pyramid
 
-alpha = 1000
+alpha = 20
 lambda_c = 16
 r1 = 0.5
 r2 = 0.05
@@ -129,7 +129,7 @@ def update(frame):
     for i, line in enumerate(lines):
         line.set_data(range(len(intensity_queues[i])), intensity_queues[i])
     ax.set_xlim(0, max(len(intensity_queues[0]), 100))
-    ax.set_ylim(-1, 1)
+    ax.set_ylim(min(min(intensity_queues[0]), min(intensity_queues[1]), min(intensity_queues[2])), max(max(intensity_queues[0]), max(intensity_queues[1]), max(intensity_queues[2])) * 2)
 
     print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
     cv2.putText(output, f"Delay: {(time.time() - start_time)*1000:.2f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)

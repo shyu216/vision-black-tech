@@ -46,12 +46,9 @@ if not ret:
     cap.release()
     exit()
 
-# 手动选择三个 ROI
-rois = []
-for i in range(3):
-    roi = cv2.selectROI(f'Select ROI {i+1}', frame, fromCenter=False, showCrosshair=True)
-    rois.append(roi)
-    cv2.destroyWindow(f'Select ROI {i+1}')
+# 将图像划分为9个网格
+grid_size = (frame.shape[0] // 3, frame.shape[1] // 3)
+grids = [(i * grid_size[0], j * grid_size[1], grid_size[0], grid_size[1]) for i in range(3) for j in range(3)]
 
 # 直接转换为YCrCb并归一化
 frame_ycrcb = cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb).astype(np.float32) / 255.0
@@ -62,8 +59,8 @@ lowpass2 = copy.deepcopy(pyr)
 
 # 初始化 matplotlib 图形
 fig, ax = plt.subplots()
-intensity_queues = [deque(maxlen=100) for _ in range(3)]
-lines = [ax.plot([], [], lw=2, label=f'ROI {i+1}')[0] for i in range(3)]
+intensity_queues = [deque(maxlen=100) for _ in range(9)]
+lines = [ax.plot([], [], lw=2, label=f'Grid {i+1}')[0] for i in range(9)]
 ax.set_xlim(0, 100)
 ax.set_ylim(-1, 1)
 ax.set_xlabel('Frame')
@@ -123,37 +120,31 @@ def update(frame):
     frame_ycrcb[:, :, 0] = upsampled
     output = cv2.cvtColor(frame_ycrcb, cv2.COLOR_YCrCb2BGR)
 
-    # 计算每个 ROI 的平均强度
+    # 计算每个网格的平均强度
     roi_frame = upsampled
-    for i, roi in enumerate(rois):
-        roi_intensity = np.mean(roi_frame[roi[1]:roi[1]+roi[3], roi[0]:roi[0]+roi[2]])
+    for i, grid in enumerate(grids):
+        roi_intensity = np.mean(roi_frame[grid[0]:grid[0]+grid[2], grid[1]:grid[1]+grid[3]])
         intensity_queues[i].append(roi_intensity)
 
     # 更新 matplotlib 图形
     for i, line in enumerate(lines):
-        smoothed_intensity = moving_average(intensity_queues[i], window_size)
-        line.set_data(range(len(smoothed_intensity)), smoothed_intensity)
+        smoothed_data = moving_average(intensity_queues[i], window_size)
+        line.set_data(range(len(smoothed_data)), smoothed_data)
     ax.set_xlim(0, max(len(intensity_queues[0]), 100))
     ax.set_ylim(min(min(intensity_queues[0]), min(intensity_queues[1]), min(intensity_queues[2])), max(max(intensity_queues[0]), max(intensity_queues[1]), max(intensity_queues[2])) * 2)
 
     # print(f"延迟: {(time.time() - start_time)*1000:.2f}ms")
     cv2.putText(output, f"Delay: {(time.time() - start_time)*1000:.2f}ms", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-    for i, roi in enumerate(rois):
+    for i, grid in enumerate(grids):
         roi_intensity = intensity_queues[i][-1]
-        cv2.putText(output, f"ROI {i+1} Intensity: {roi_intensity:.4f}", (10, 60 + i*30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-        cv2.rectangle(output, (roi[0], roi[1]), (roi[0]+roi[2], roi[1]+roi[3]), (0, 255, 0), 2)
-        cv2.putText(output, f"ROI {i+1}", (roi[0], roi[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        cv2.putText(output, f"Grid {i+1} Intensity: {roi_intensity:.4f}", (10, 60 + i*30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        cv2.rectangle(output, (grid[1], grid[0]), (grid[1]+grid[3], grid[0]+grid[2]), (0, 255, 0), 2)
+        cv2.putText(output, f"Grid {i+1}", (grid[1], grid[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
     
     cv2.imshow('Amplified Camera', output)
 
     key = cv2.waitKey(1)
-    if key == ord('s'):
-        # 手动选择 ROI
-        for i in range(3):
-            roi = cv2.selectROI(f'Select ROI {i+1}', frame, fromCenter=False, showCrosshair=True)
-            rois[i] = roi
-            cv2.destroyWindow(f'Select ROI {i+1}')
-    elif key == ord('q'):
+    if key == ord('q'):
         plt.close(fig)
         cap.release()
         cv2.destroyAllWindows()

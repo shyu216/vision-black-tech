@@ -21,12 +21,12 @@ def build_laplacian_pyramid(image, levels):
     
     return laplacian_pyramid
 
-alpha = 20
+alpha = 10
 lambda_c = 16
-r1 = 0.5
-r2 = 0.05
+r1 = 20/60
+r2 = 10/60
 chromAttenuation = 0.1
-nlevels = 4
+nlevels = 8
 
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():
@@ -65,6 +65,15 @@ ax.set_ylabel('Average Intensity')
 def init():
     line.set_data([], [])
     return line,
+
+# # 初始化卡尔曼滤波器
+# kalman = cv2.KalmanFilter(1, 1)
+# kalman.measurementMatrix = np.array([[1]], np.float32)
+# kalman.transitionMatrix = np.array([[1]], np.float32)
+# kalman.processNoiseCov = np.array([[1e-5]], np.float32)
+# kalman.measurementNoiseCov = np.array([[1e-1]], np.float32)
+# kalman.errorCovPost = np.array([[1]], np.float32)
+# kalman.statePost = np.array([[0]], np.float32)
 
 def update(frame):
     ret, frame = cap.read()
@@ -117,6 +126,11 @@ def update(frame):
     # 计算 ROI 的平均强度
     roi_frame = upsampled
     roi_intensity = np.mean(roi_frame[roi[1]:roi[1]+roi[3], roi[0]:roi[0]+roi[2]])
+    
+    # 使用卡尔曼滤波器平滑强度值
+    # kalman.correct(np.array([[roi_intensity]], np.float32))
+    # filtered_intensity = kalman.predict()[0, 0]
+    
     intensity_queue.append(roi_intensity)
 
     # 更新 matplotlib 图形
@@ -145,3 +159,5 @@ def update(frame):
 ani = FuncAnimation(fig, update, init_func=init, blit=True, interval=50)
 
 plt.show()
+
+# kalman filter

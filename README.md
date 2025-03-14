@@ -4,6 +4,10 @@
 
 ![filtered_images.png](filtered_images.png)
 
+## laplacian&gaussian_pyramid
+
+![laplacian&gaussian_pyramid.png](laplacian&gaussian_pyramid.png)
+
 ## analog_filter
 
 ![analog_filter.png](analog_filter.png)
@@ -11,10 +15,6 @@
 ## fourier_transform
 
 ![fourier_transform.png](fourier_transform.png)
-
-## laplacian_pyramid
-
-![laplacian_pyramid.png](laplacian_pyramid.png)
 
 ## ideal_filter
 

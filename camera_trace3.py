@@ -24,12 +24,12 @@ def build_laplacian_pyramid(image, levels):
 def moving_average(data, window_size):
     return np.convolve(data, np.ones(window_size)/window_size, mode='valid')
 
-alpha = 20
+alpha = 10
 lambda_c = 16
 r1 = 0.5
 r2 = 0.05
 chromAttenuation = 0.1
-nlevels = 4
+nlevels = 8
 window_size = 5  # 移动平均窗口大小
 
 cap = cv2.VideoCapture(0)
@@ -120,7 +120,7 @@ def update(frame):
         upsampled += filtered[l]
     
     # 合成并转换颜色空间
-    frame_ycrcb[:, :, 0] = upsampled
+    frame_ycrcb[:, :, 0] = upsampled # + frame_y
     output = cv2.cvtColor(frame_ycrcb, cv2.COLOR_YCrCb2BGR)
 
     # 计算每个 ROI 的平均强度

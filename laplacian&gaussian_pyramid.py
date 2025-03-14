@@ -31,7 +31,20 @@ def build_laplacian_pyramid(gaussian_pyramid):
     laplacian_pyramid.append(gaussian_pyramid[-1])  # 最后一层直接添加
     return laplacian_pyramid
 
-def reconstruct_image(laplacian_pyramid):
+def reconstruct_gaussian_pyramid(gaussian_pyramid):
+    """
+    从高斯金字塔重建图像
+    :param gaussian_pyramid: 高斯金字塔列表
+    :return: 重建的图像
+    """
+    image = gaussian_pyramid[-1]
+    for i in range(len(gaussian_pyramid) - 2, -1, -1):
+        size = (gaussian_pyramid[i].shape[1], gaussian_pyramid[i].shape[0])
+        image = cv2.pyrUp(image, dstsize=size)
+        image = cv2.add(image, gaussian_pyramid[i])
+    return image
+
+def reconstruct_laplacian_pyramid(laplacian_pyramid):
     """
     从拉普拉斯金字塔重建图像
     :param laplacian_pyramid: 拉普拉斯金字塔列表
@@ -44,12 +57,13 @@ def reconstruct_image(laplacian_pyramid):
         image = cv2.add(image, laplacian_pyramid[i])
     return image
 
-def display(original_image, gaussian_pyramid, laplacian_pyramid, reconstructed_image):
+def display(original_image, gaussian_pyramid, laplacian_pyramid, reconstructed_gaussian_image, reconstructed_laplacian_image):
     """
     显示高斯金字塔、拉普拉斯金字塔和重建图像
     :param gaussian_pyramid: 高斯金字塔列表
     :param laplacian_pyramid: 拉普拉斯金字塔列表
-    :param reconstructed_image: 重建的图像
+    :param reconstructed_gaussian_image: 重建的高斯图像
+    :param reconstructed_laplacian_image: 重建的拉普拉斯图像
     """
     plt.figure(figsize=(20, 10))
     
@@ -68,20 +82,26 @@ def display(original_image, gaussian_pyramid, laplacian_pyramid, reconstructed_i
         plt.axis('off')
 
     # 显示原始图像
-    plt.subplot(3, 2, 5)
+    plt.subplot(3, 3, 7)
     plt.imshow(cv2.cvtColor(original_image.astype(np.uint8), cv2.COLOR_BGR2RGB))
     plt.title('Original Image')
     plt.axis('off')
     
-    # 显示重建图像
-    plt.subplot(3, 2, 6)
-    plt.imshow(cv2.cvtColor(reconstructed_image.astype(np.uint8), cv2.COLOR_BGR2RGB))
+    # 显示重建的高斯图像
+    plt.subplot(3, 3, 8)
+    plt.imshow(cv2.cvtColor(reconstructed_gaussian_image.astype(np.uint8), cv2.COLOR_BGR2RGB))
+    plt.title('Gaussian Reconstructed Image')
+    plt.axis('off')
+    
+    # 显示重建的拉普拉斯图像
+    plt.subplot(3, 3, 9)
+    plt.imshow(cv2.cvtColor(reconstructed_laplacian_image.astype(np.uint8), cv2.COLOR_BGR2RGB))
     plt.title('Laplacian Reconstructed Image')
     plt.axis('off')
     
     # plt.show() 
     # 保存结果
-    plt.savefig('laplacian_pyramid.png')
+    plt.savefig('laplacian&gaussian_pyramid')
     plt.close()
 
 def main():
@@ -93,11 +113,13 @@ def main():
     gaussian_pyramid = build_gaussian_pyramid(image, levels)
     # 构建拉普拉斯金字塔
     laplacian_pyramid = build_laplacian_pyramid(gaussian_pyramid)
-    # 重建图像
-    reconstructed_image = reconstruct_image(laplacian_pyramid)
+    # 重建高斯图像
+    reconstructed_gaussian_image = reconstruct_gaussian_pyramid(gaussian_pyramid)
+    # 重建拉普拉斯图像
+    reconstructed_laplacian_image = reconstruct_laplacian_pyramid(laplacian_pyramid)
 
     # 显示高斯金字塔、拉普拉斯金字塔和重建图像
-    display(image, gaussian_pyramid, laplacian_pyramid, reconstructed_image)
+    display(image, gaussian_pyramid, laplacian_pyramid, reconstructed_gaussian_image, reconstructed_laplacian_image)
 
 if __name__ == "__main__":
     main()

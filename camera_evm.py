@@ -18,12 +18,12 @@ def build_laplacian_pyramid(image, levels):
     
     return laplacian_pyramid
 
-alpha = 20
+alpha = 10
 lambda_c = 16
 r1 = 0.5
 r2 = 0.05
 chromAttenuation = 0.1
-nlevels = 3
+nlevels = 8
 
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():

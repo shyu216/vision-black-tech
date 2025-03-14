@@ -26,7 +26,7 @@ lambda_c = 16
 r1 = 0.5
 r2 = 0.05
 chromAttenuation = 0.1
-nlevels = 4
+nlevels = 8
 
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():

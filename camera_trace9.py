@@ -24,12 +24,12 @@ def build_laplacian_pyramid(image, levels):
 def moving_average(data, window_size):
     return np.convolve(data, np.ones(window_size)/window_size, mode='valid')
 
-alpha = 20
+alpha = 10
 lambda_c = 16
 r1 = 0.5
 r2 = 0.05
 chromAttenuation = 0.1
-nlevels = 4
+nlevels = 8
 window_size = 5  # 移动平均窗口大小
 
 cap = cv2.VideoCapture(0)
